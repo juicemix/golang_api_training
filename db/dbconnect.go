@@ -49,7 +49,8 @@ func GetOne(database string, collection string, fkey string, fvalue string, i in
 	defer session.Close()
 
 	c := session.DB(database).C(collection)
-	err = c.Find(bson.M{fkey: fvalue}).One(&i)
+	q := bson.M{fkey: fvalue}
+	err = c.Find(q).One(&i)
 
 	return
 }
@@ -83,6 +84,7 @@ func GetAll(database string, collection string, orderby []string, limit int, pag
 	if limit == 0 {
 		limit = 9999999
 	}
+
 	err = c.Find(bson.M{}).Limit(limit).Skip((page - 1) * limit).Sort(orderby...).All(&i)
 
 	return

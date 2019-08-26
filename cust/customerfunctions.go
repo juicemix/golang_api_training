@@ -11,8 +11,8 @@ import (
 )
 
 func Add(c echo.Context) error {
-	cu := new(customerInput)
-	err := c.Bind(cu)
+	var cu customerInput
+	err := c.Bind(&cu)
 	if err != nil {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_99", err.Error(), ""}})
 	}
@@ -23,6 +23,10 @@ func Add(c echo.Context) error {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_02", "The field(s) is/are required", a}})
 	}
 
+	if !common.ValidateString(common.EMAIL_REGEX, cu.Email) {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_03", "Invalid email", "email"}})
+	}
+
 	if UserExistsById(cu.Id) {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_12", "This userid is already used", "id"}})
 	}
@@ -31,7 +35,9 @@ func Add(c echo.Context) error {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_04", "This email is already used", "email"}})
 	}
 
-	err = db.Insert("golang_training2", "customers", cu)
+	cin := InsertPreparation(cu)
+
+	err = db.Insert("golang_training2", "customers", cin)
 	if err != nil {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_99", err.Error(), ""}})
 	}
@@ -56,11 +62,9 @@ func ViewAll(c echo.Context) error {
 func UserExistsById(id string) bool {
 	c, err := findByKey("id", id)
 
-	if err != nil {
-		return true
-	}
+	strconv.Atoi(c.Id)
 
-	if c.Id == "" {
+	if err != nil && err.Error() == "not found" {
 		return false
 	} else {
 		return true
@@ -70,11 +74,9 @@ func UserExistsById(id string) bool {
 func UserExistsByEmail(email string) bool {
 	c, err := findByKey("email", email)
 
-	if err != nil {
-		return true
-	}
+	strconv.Atoi(c.Id)
 
-	if c.Id == "" {
+	if err != nil && err.Error() == "not found" {
 		return false
 	} else {
 		return true
