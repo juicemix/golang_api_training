@@ -10,3 +10,8 @@ type Error struct {
 type ErrorReturn struct {
 	Err Error `json:"response"`
 }
+
+type ErrorWithData struct {
+	Err  Error       `json:"response"`
+	Data interface{} `json:"data"`
+}

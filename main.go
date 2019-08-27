@@ -1,3 +1,10 @@
+/*--------------------------------------------
+|This is main.go file where everything
+|starts.
+|
+|
+--------------------------------------------*/
+
 package main
 
 import (
@@ -5,6 +12,5 @@ import (
 )
 
 func main() {
-
 	routing.RoutingStart()
 }

@@ -1,16 +1,22 @@
 package cust
 
 import (
+	"golang_api/auth"
 	"golang_api/common"
-	"golang_api/db"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
 func Add(c echo.Context) error {
+	aut := auth.Authenticate(c.Get("user").(*jwt.Token))
+	if aut == "expired" {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "Access Unathorized", ""}})
+	}
+
 	var cu customerInput
 	err := c.Bind(&cu)
 	if err != nil {
@@ -27,17 +33,17 @@ func Add(c echo.Context) error {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_03", "Invalid email", "email"}})
 	}
 
-	if UserExistsById(cu.Id) {
+	if _, e := UserExistsById(cu.Id); e {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_12", "This userid is already used", "id"}})
 	}
 
-	if UserExistsByEmail(cu.Email) {
+	if _, e := UserExistsByEmail(cu.Email); e {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_04", "This email is already used", "email"}})
 	}
 
 	cin := InsertPreparation(cu)
 
-	err = db.Insert("golang_training2", "customers", cin)
+	err = insert(cin)
 	if err != nil {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_99", err.Error(), ""}})
 	}
@@ -46,6 +52,11 @@ func Add(c echo.Context) error {
 }
 
 func ViewAll(c echo.Context) error {
+	aut := auth.Authenticate(c.Get("user").(*jwt.Token))
+	if aut == "expired" {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "Access Unathorized", ""}})
+	}
+
 	limit, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil && c.QueryParam("limit") != "" {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_10", "Wrong limit input", "limit"}})
@@ -56,29 +67,63 @@ func ViewAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_11", "Wrong page input", "limit"}})
 	}
 
-	return c.String(http.StatusOK, strconv.Itoa(limit+page))
+	ret, _ := getAll([]string{"timestamp"}, limit, page)
+
+	return c.JSON(http.StatusOK, common.ErrorWithData{common.Error{"001", "USR_00", "Success", ""}, ret})
 }
 
-func UserExistsById(id string) bool {
-	c, err := findByKey("id", id)
+func Find(c echo.Context) error {
+	aut := auth.Authenticate(c.Get("user").(*jwt.Token))
+	if aut == "expired" {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "Access Unathorized", ""}})
+	}
 
-	strconv.Atoi(c.Id)
+	id := c.Param("id")
 
-	if err != nil && err.Error() == "not found" {
-		return false
+	if u, f := UserExistsById(id); f {
+		return c.JSON(http.StatusOK, common.ErrorWithData{common.Error{"001", "USR_00", "Success", ""}, u})
 	} else {
-		return true
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "User not found", ""}})
 	}
 }
 
-func UserExistsByEmail(email string) bool {
-	c, err := findByKey("email", email)
+func Edit(c echo.Context) error {
+	aut := auth.Authenticate(c.Get("user").(*jwt.Token))
+	if aut == "expired" {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "Access Unathorized", ""}})
+	}
 
-	strconv.Atoi(c.Id)
+	var cu customerInput
+	err := c.Bind(&cu)
+	if err != nil {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_99", err.Error(), ""}})
+	}
+
+	cin := InsertPreparation(cu)
+	err = update(cin)
+	if err != nil {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "USR_99", err.Error(), ""}})
+	}
+
+	return c.JSON(http.StatusCreated, common.ErrorReturn{common.Error{"001", "USR_00", "Success", ""}})
+}
+
+func UserExistsById(id string) (customer, bool) {
+	c, _ := getOne("id", id)
+
+	if c.Firstname == "" {
+		return c, false
+	} else {
+		return c, true
+	}
+}
+
+func UserExistsByEmail(email string) (customer, bool) {
+	c, err := getOne("email", email)
 
 	if err != nil && err.Error() == "not found" {
-		return false
+		return c, false
 	} else {
-		return true
+		return c, true
 	}
 }
