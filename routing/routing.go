@@ -3,8 +3,9 @@ package routing
 import (
 	"net/http"
 
-	"golang_api/auth"
-	"golang_api/cust"
+	"golang_api/entities/auth"
+	"golang_api/entities/cat"
+	"golang_api/entities/cust"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -28,9 +29,16 @@ func RoutingStart() {
 
 	// Customers functions
 	e.GET("/customers", cust.ViewAll, isLoggedIn)
+	e.GET("/customers", cust.GetLoggedInData, isLoggedIn)
 	e.GET("/customers/:id", cust.Find, isLoggedIn)
 	e.POST("/customers", cust.Add, isLoggedIn)
 	e.PUT("/customers", cust.Edit, isLoggedIn)
+
+	// Categories functions
+	e.GET("/categories", cat.ViewAll, isLoggedIn)
+	e.GET("/categories/:id", cat.Find, isLoggedIn)
+
+	// Products functions
 
 	// Start
 	e.Logger.Fatal(e.Start(":6969"))

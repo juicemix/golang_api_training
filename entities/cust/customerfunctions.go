@@ -1,8 +1,8 @@
 package cust
 
 import (
-	"golang_api/auth"
 	"golang_api/common"
+	"golang_api/entities/auth"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,6 +79,23 @@ func Find(c echo.Context) error {
 	}
 
 	id := c.Param("id")
+
+	if u, f := UserExistsById(id); f {
+		return c.JSON(http.StatusOK, common.ErrorWithData{common.Error{"001", "USR_00", "Success", ""}, u})
+	} else {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "User not found", ""}})
+	}
+}
+
+func GetLoggedInData(c echo.Context) error {
+	t := c.Get("user").(*jwt.Token)
+	aut := auth.Authenticate(t)
+	if aut == "expired" {
+		return c.JSON(http.StatusOK, common.ErrorReturn{common.Error{"100", "AUT_09", "Access Unathorized", ""}})
+	}
+
+	x := t.Claims.(jwt.MapClaims)
+	id := x["id"].(string)
 
 	if u, f := UserExistsById(id); f {
 		return c.JSON(http.StatusOK, common.ErrorWithData{common.Error{"001", "USR_00", "Success", ""}, u})

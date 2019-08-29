@@ -42,7 +42,7 @@ func (h *Handler) Login(c echo.Context) error {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = cu.Userid
+	claims["id"] = cu.Userid
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
 	t, err := token.SignedString([]byte("P@ssw0rd"))
