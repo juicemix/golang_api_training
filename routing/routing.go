@@ -31,14 +31,22 @@ func RoutingStart() {
 	e.GET("/customers", cust.ViewAll, isLoggedIn)
 	e.GET("/customers", cust.GetLoggedInData, isLoggedIn)
 	e.GET("/customers/:id", cust.Find, isLoggedIn)
-	e.POST("/customers", cust.Add, isLoggedIn)
+	e.POST("/customers", cust.Add)
 	e.PUT("/customers", cust.Edit, isLoggedIn)
 
 	// Categories functions
 	e.GET("/categories", cat.ViewAll, isLoggedIn)
 	e.GET("/categories/:id", cat.Find, isLoggedIn)
 
-	// Products functions
+	/*
+		// Products functions
+		e.GET("/products", prod.ViewAll, isLoggedIn)
+		e.GET("/products/:id", prod.Find, isLoggedIn)
+		e.GET("/products/inCategory/:cat_id", prod.FindByCategories, isLoggedIn)
+		e.POST("/products", prod.Add, isLoggedIn)
+		e.POST("/products/categories", prod.AddCategory, isLoggedIn)
+		e.PUT("/products/categories/:id", prod.UpdateCategories, isLoggedIn)
+	*/
 
 	// Start
 	e.Logger.Fatal(e.Start(":6969"))

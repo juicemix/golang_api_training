@@ -40,7 +40,7 @@ func getOne(fkey string, fvalue string) (category, error) {
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB("golang_training2").C("customers")
+	c := session.DB("golang_training2").C("categories")
 	q := bson.M{fkey: fvalue}
 
 	err = c.Find(q).One(&ret)
@@ -58,7 +58,7 @@ func getAll(orderby []string, limit int, page int) ([]category, error) {
 
 	defer session.Close()
 
-	c := session.DB("golang_training2").C("customers")
+	c := session.DB("golang_training2").C("categories")
 
 	if limit == 0 {
 		limit = 9999999
